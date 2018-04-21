@@ -1,7 +1,17 @@
+ @import url('https://fonts.googleapis.com/css?family=Gugi|Montserrat');
+ 
 body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
-  background: #fff1eb;
-  background-image: linear-gradient(90deg, #fff1eb 0%, #ace0f9 100%);
+  font-family: 'Montserrat', sans-serif;
+  background: #ff5858;
+  background-image: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
+}
+
+button {
+  cursor: pointer;
+}
+
+.gugi {
+    font-family: 'Gugi', cursive;
 }
