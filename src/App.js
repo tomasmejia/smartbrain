@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import Particles from 'react-particles-js';
-import Navigation from './components/Navigation/Navigation'
-import Logo from './components/Logo/Logo'
+import Navigation from './components/Navigation/Navigation';
+import SignIn from './components/SignIn/SignIn';
+import Logo from './components/Logo/Logo';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
 import Rank from './components/Rank/Rank';
 import FaceRecognition from './components/FaceRecognition/FaceRecognition';
@@ -152,6 +153,9 @@ class App extends Component {
   }
 
   displayFaceBox = (box) => {
+    // the box param is equal to whatever
+    // calculateFaceLocation returns
+    console.log(box);
     this.setState({box: box})
   }
 
@@ -181,12 +185,13 @@ class App extends Component {
           params={particlesOptions}
         />
         <Navigation />
+        <SignIn />
         <Logo />
         <Rank />
         <ImageLinkForm 
           onButtonSubmit={this.onButtonSubmit} 
           onInputChange={this.onInputChange} />
-          <FaceRecognition imageUrl={this.state.imageUrl}/>
+          <FaceRecognition box={this.state.box} imageUrl={this.state.imageUrl}/>
       </div>
     );
   }
