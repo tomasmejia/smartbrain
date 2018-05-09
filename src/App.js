@@ -7,12 +7,7 @@ import Logo from './components/Logo/Logo';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
 import Rank from './components/Rank/Rank';
 import FaceRecognition from './components/FaceRecognition/FaceRecognition';
-import Clarifai from 'clarifai';
 import './App.css';
-
-const app = new Clarifai.App({
-  apiKey: 'b8644660adcc4b08b003edd4ed36a31f'
-});
 
 const particlesOptions = {
   "particles": {
@@ -125,18 +120,39 @@ const particlesOptions = {
   "retina_detect": true
 }
 
+const initialState = {
+  input: '',
+  imageUrl: '',
+  box: {},
+  route: 'signin',
+  isSignedIn: false,
+  user: {
+    id: '',
+    name: '',
+    email: '',
+    entries: 0,
+    joined: ''
+  }
+}
+
 class App extends Component {
   constructor() {
     super();
-    this.state = {
-      input: '',
-      imageUrl: '',
-      box: {},
-      route: 'signin',
-      isSignedIn: false
-    }
+    this.state = initialState
   }
-  
+
+  loadUser = data => {
+    this.setState({
+      user: {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        entries: data.entries,
+        joined: data.joined
+      }
+    });
+  }
+
   calculateFaceLocation = (data) => {
     // we get the bouding box data
     const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
@@ -163,31 +179,50 @@ class App extends Component {
 
   onInputChange = (e) => {
     // receive the value and set it on 'input' state
-    // so onButtonSubmit can use it
+    // so onPictureSubmit can use it
     this.setState({ input: e.target.value });
   }
 
-  onButtonSubmit = () => {
+  onPictureSubmit = () => {
     // sets the state of imageUrl and also predicts the faces'
     // bounding boxes
     this.setState({ imageUrl: this.state.input });
-    app.models.predict(
-      Clarifai.FACE_DETECT_MODEL,
-      this.state.input)
-      .then(response =>
-        // getting the bounding box data
-        this.displayFaceBox(this.calculateFaceLocation(response)))
+    fetch('https://radiant-wave-30462.herokuapp.com/imageurl', {
+        method: 'post',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: this.state.input
+        })
+      })
+      .then(response => response.json())
+      .then(response => {
+        if (response) {
+          fetch('https://radiant-wave-30462.herokuapp.com/image', {
+            method: 'put',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: this.state.user.id
+            })
+          })
+            .then(response => response.json())
+            .then(count => {
+              this.setState(Object.assign(this.state.user, { entries: count }));
+            })
+            .catch(console.log);
+        }
+        this.displayFaceBox(this.calculateFaceLocation(response))
+      })
       .catch(err => console.log("Something went wrong: ", err));
   }
 
   onRouteChange = (route) => {
     if (route === 'signout') {
-      this.setState({isSignedIn: false})
+      this.setState(initialState)
     } else if (route === 'home') {
-      this.setState({isSignedIn: true})
+      this.setState({ isSignedIn: true })
     }
     // when the user clicks Sign in display the route
-    this.setState({route: route});
+    this.setState({ route: route });
   };
 
   render() {
@@ -198,20 +233,20 @@ class App extends Component {
           params={particlesOptions}
         />
         <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange} />
-        { 
+        {
           route === 'home'
-          ? <div>
+            ? <div>
               <Logo />
-              <Rank />
+              <Rank name={this.state.user.name} entries={this.state.user.entries} />
               <ImageLinkForm
-                onButtonSubmit={this.onButtonSubmit}
+                onPictureSubmit={this.onPictureSubmit}
                 onInputChange={this.onInputChange} />
               <FaceRecognition box={box} imageUrl={imageUrl} />
             </div>
-          : (
+            : (
               route === 'signin'
-              ? <SignIn onRouteChange={this.onRouteChange} /> 
-              : <Register onRouteChange={this.onRouteChange} /> 
+                ? <SignIn loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
+                : <Register loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
             )
         }
       </div>
